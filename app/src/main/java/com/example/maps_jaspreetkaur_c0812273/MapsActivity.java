@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -27,10 +29,10 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 
 
-
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -97,7 +99,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick( Marker marker) {
-                Toast.makeText(getApplicationContext(),"Yes is clicked",Toast.LENGTH_LONG).show();
+
+
+                Geocoder geocoder = new Geocoder(getApplicationContext(),
+                        Locale.getDefault());
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(marker.getPosition().latitude, marker.getPosition().longitude, 1);
+                    String address = addresses.get(0).getAddressLine(0);
+                    String postal = addresses.get(0).getPostalCode();
+                    String city = addresses.get(0).getLocality();
+                    String province = addresses.get(0).getAddressLine(1);
+                    Toast.makeText(getApplicationContext(),address,Toast.LENGTH_LONG).show();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
             return false;
             }
         });
