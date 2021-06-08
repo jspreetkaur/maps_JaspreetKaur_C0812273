@@ -3,6 +3,7 @@ package com.example.maps_jaspreetkaur_c0812273;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -123,9 +124,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-//                Location location = new Location("Your Destination");
-//                location.setLatitude(latLng.latitude);
-//                location.setLongitude(latLng.longitude);
                 // set marker
                 setMarker(latLng);
             }
@@ -144,10 +142,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     break;
 
                 }
-
                 Double distance =calculateDistance(userLocation,latLng);
                 MarkerOptions options = new MarkerOptions().position(latLng)
-                        .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance) + "miles" );
+                        .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance) + "miles").icon(BitmapDescriptorFactory.fromResource(R.drawable.locationmarker));
 
 
                 if (markers.size() == POLYGON_SIDES)
@@ -156,7 +153,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (markers.size() == POLYGON_SIDES)
                     drawShape();
             }
-
 
             private void drawShape() {
                 PolygonOptions options = new PolygonOptions()
@@ -174,12 +170,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             private void clearMap() {
 
-                /*if (destMarker != null) {
-                    destMarker.remove();
-                    destMarker = null;
-                }
-
-                line.remove();*/
 
                 for (Marker marker: markers)
                     marker.remove();
@@ -188,14 +178,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 shape.remove();
                 shape = null;
             }
-            /*
-            private void drawLine() {
-                PolylineOptions options = new PolylineOptions()
-                        .color(Color.BLACK)
-                        .width(10)
-                        .add(homeMarker.getPosition(), destMarker.getPosition());
-                line = mMap.addPolyline(options);
-            }*/
+
         });
     }
 
@@ -204,11 +187,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, locationListener);
-
-        /*Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        setHomeMarker(lastKnownLocation);*/
     }
-
 
     private void requestLocationPermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
