@@ -3,7 +3,6 @@ package com.example.maps_jaspreetkaur_c0812273;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -97,26 +96,63 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else
             startUpdateLocation();
 
+        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick( Polyline polyline) {
+               // Toast.makeText(getApplicationContext(),"address",Toast.LENGTH_LONG).show();
+
+            }
+        });
+        mMap.setOnPolygonClickListener(new GoogleMap.OnPolygonClickListener() {
+            @Override
+            public void onPolygonClick(Polygon polygon) {
+              //  Toast.makeText(getApplicationContext(),"address",Toast.LENGTH_LONG).show();
+
+            }
+        });
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart( Marker marker) {
+
+            }
+
+
+            @Override
+            public void onMarkerDrag( Marker marker) {
+            updateDistance(marker);
+
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                //removing the polygon
+                removeAllShapes();
+                //getting index of dragged marker
+                int mindex = 0;
+                switch(marker.getTitle())
+                {
+                    case "A" : mindex = 0 ;
+                        break;
+                    case "B" : mindex = 1;
+                        break;
+                    case "C" : mindex = 2;
+                        break;
+                    case "D" : mindex = 3;
+                        break;
+                }
+                //updating the new position of marker
+                markers.set(mindex,marker);
+                //redrawing the polygon
+                drawShape();
+            }
+        });
+
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public boolean onMarkerClick( Marker marker) {
-
-
-                Geocoder geocoder = new Geocoder(getApplicationContext(),
-                        Locale.getDefault());
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(marker.getPosition().latitude, marker.getPosition().longitude, 1);
-                    String address = addresses.get(0).getAddressLine(0);
-                    String postal = addresses.get(0).getPostalCode();
-                    String city = addresses.get(0).getLocality();
-                    String province = addresses.get(0).getAddressLine(1);
-                    Toast.makeText(getApplicationContext(),address,Toast.LENGTH_LONG).show();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-
-            return false;
+            public boolean onMarkerClick(Marker marker) {
+               showAddressToast(marker);
+                return false;
             }
         });
 
@@ -128,58 +164,90 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 setMarker(latLng);
             }
 
-            private void setMarker(LatLng latLng) {
-                String markerTitle = "";
-                switch(markers.size())
-                {
-                    case 0 : markerTitle = "A";
-                    break;
-                    case 1 : markerTitle = "B";
-                    break;
-                    case 2 : markerTitle = "C";
-                    break;
-                    case 3 : markerTitle = "D";
-                    break;
-
-                }
-                Double distance =calculateDistance(userLocation,latLng);
-                MarkerOptions options = new MarkerOptions().position(latLng)
-                        .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance) + "miles").icon(BitmapDescriptorFactory.fromResource(R.drawable.locationmarker));
-
-
-                if (markers.size() == POLYGON_SIDES)
-                    clearMap();
-                markers.add(mMap.addMarker(options));
-                if (markers.size() == POLYGON_SIDES)
-                    drawShape();
-            }
-
-            private void drawShape() {
-                PolygonOptions options = new PolygonOptions()
-                        .fillColor( 0x3500FF00)
-                        .strokeColor(Color.RED)
-                        .strokeWidth(3);
-
-                for (int i=0; i<POLYGON_SIDES; i++) {
-                    options.add(markers.get(i).getPosition());
-                }
-
-                shape = mMap.addPolygon(options);
-
-            }
-
-            private void clearMap() {
-
-
-                for (Marker marker: markers)
-                    marker.remove();
-
-                markers.clear();
-                shape.remove();
-                shape = null;
-            }
-
         });
+
+    }
+
+    private void showAddressToast(Marker marker)
+    {
+        Geocoder geocoder = new Geocoder(getApplicationContext(),
+                Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(marker.getPosition().latitude, marker.getPosition().longitude, 1);
+            String address = addresses.get(0).getAddressLine(0);
+            String postal = addresses.get(0).getPostalCode();
+            String city = addresses.get(0).getLocality();
+            String province = addresses.get(0).getAddressLine(1);
+            Toast.makeText(getApplicationContext(),address,Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateDistance(Marker marker)
+    {
+        Double distance =calculateDistance(userLocation,marker.getPosition());
+        marker.setSnippet("Distance = " + String.format("%.2f", distance));
+    }
+
+    private void setMarker(LatLng latLng) {
+        String markerTitle = "";
+        switch(markers.size())
+        {
+            case 0 : markerTitle = "A";
+                break;
+            case 1 : markerTitle = "B";
+                break;
+            case 2 : markerTitle = "C";
+                break;
+            case 3 : markerTitle = "D";
+                break;
+
+        }
+        Double distance =calculateDistance(userLocation,latLng);
+        MarkerOptions options = new MarkerOptions().position(latLng)
+                .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance) + "miles").icon(BitmapDescriptorFactory.fromResource(R.drawable.locationmarker)).draggable(true);
+
+
+        if (markers.size() == POLYGON_SIDES)
+        {
+        removeAllMarkers();
+        removeAllShapes();
+        }
+
+        markers.add(mMap.addMarker(options));
+        drawShape();
+
+    }
+
+    private void drawShape() {
+        if (markers.size() == POLYGON_SIDES) {
+            PolygonOptions options = new PolygonOptions()
+                    .fillColor(0x3500FF00)
+                    .strokeColor(Color.RED)
+                    .strokeWidth(7);
+
+            for (int i = 0; i < POLYGON_SIDES; i++) {
+                options.add(markers.get(i).getPosition());
+            }
+
+            shape = mMap.addPolygon(options);
+        }
+
+    }
+
+    private void removeAllMarkers()
+    {
+        for (Marker marker: markers)
+            marker.remove();
+        markers.clear();
+    }
+
+    private void removeAllShapes() {
+
+        if(shape != null)
+        shape.remove();
+        shape = null;
     }
 
     private void startUpdateLocation() {
