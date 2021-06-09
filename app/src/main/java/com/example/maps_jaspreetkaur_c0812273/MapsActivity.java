@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -51,6 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker destMarker;
     LatLng userLocation ;
 
+
     private static final int POLYGON_SIDES = 4;
     List<Marker> markers = new ArrayList();
 
@@ -61,6 +63,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -99,28 +102,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick( Polyline polyline) {
-               // Toast.makeText(getApplicationContext(),"address",Toast.LENGTH_LONG).show();
+               Toast.makeText(getApplicationContext(),"address2",Toast.LENGTH_LONG).show();
 
             }
         });
         mMap.setOnPolygonClickListener(new GoogleMap.OnPolygonClickListener() {
             @Override
             public void onPolygonClick(Polygon polygon) {
-              //  Toast.makeText(getApplicationContext(),"address",Toast.LENGTH_LONG).show();
+                double dist_AB = calculateDistance(markers.get(0).getPosition(),markers.get(1).getPosition());
+                double dist_BC = calculateDistance(markers.get(1).getPosition(),markers.get(2).getPosition());
+                double dist_CD = calculateDistance(markers.get(2).getPosition(),markers.get(3).getPosition());
+                double dist_DA = calculateDistance(markers.get(3).getPosition(),markers.get(0).getPosition());
+                double totalDistance = dist_AB + dist_BC + dist_CD + dist_DA ;
+              Toast.makeText(getApplicationContext(),"Total Distance = " + String.format("%.2f", totalDistance*0.001)+ " KM",Toast.LENGTH_LONG).show();
 
             }
         });
 
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
-            public void onMarkerDragStart( Marker marker) {
+            public void onMarkerDragStart(Marker marker) {
 
             }
 
-
             @Override
-            public void onMarkerDrag( Marker marker) {
-            updateDistance(marker);
+            public void onMarkerDrag(Marker marker) {
 
             }
 
@@ -160,6 +166,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
+
+                for (Marker marker: markers)
+                {
+                    if(calculateDistance(latLng,marker.getPosition())*100 < 1)
+                    {
+                        Toast.makeText(getApplicationContext(),"qwe",Toast.LENGTH_LONG ).show();
+                    }
+                }
                 // set marker
                 setMarker(latLng);
             }
@@ -204,9 +218,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
 
         }
+
         Double distance =calculateDistance(userLocation,latLng);
         MarkerOptions options = new MarkerOptions().position(latLng)
-                .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance) + "miles").icon(BitmapDescriptorFactory.fromResource(R.drawable.locationmarker)).draggable(true);
+                .title(markerTitle).snippet("Distance = " + String.format("%.2f", distance*0.001) + "KM").icon(BitmapDescriptorFactory.fromResource(R.drawable.locationmarker)).draggable(true);
 
 
         if (markers.size() == POLYGON_SIDES)
@@ -225,13 +240,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             PolygonOptions options = new PolygonOptions()
                     .fillColor(0x3500FF00)
                     .strokeColor(Color.RED)
-                    .strokeWidth(7);
+                    .strokeWidth(7).clickable(true);
 
             for (int i = 0; i < POLYGON_SIDES; i++) {
                 options.add(markers.get(i).getPosition());
             }
 
             shape = mMap.addPolygon(options);
+
         }
 
     }
@@ -276,20 +292,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private double calculateDistance(LatLng source ,LatLng destination) {
-        double lat1 = source.latitude;
-        double lat2 = destination.latitude;
-        double lon1 = source.longitude;
-        double  lon2 = destination.longitude;
 
-        double theta = lon1 - lon2;
-        double dist = Math.sin(deg2rad(lat1))
-                * Math.sin(deg2rad(lat2))
-                + Math.cos(deg2rad(lat1))
-                * Math.cos(deg2rad(lat2))
-                * Math.cos(deg2rad(theta));
-        dist = Math.acos(dist);
-        dist = rad2deg(dist);
-        dist = dist * 60 * 1.1515;
+        Location start = new Location("Start");
+        start.setLatitude(source.latitude);
+        start.setLongitude(source.longitude);
+        Location end = new Location("End");
+        end.setLatitude(destination.latitude);
+        end.setLongitude(destination.longitude);
+       float dist = start.distanceTo(end);
         return (dist);
     }
 
