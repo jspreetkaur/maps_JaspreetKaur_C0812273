@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 
 import java.io.IOException;
@@ -55,6 +56,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private static final int POLYGON_SIDES = 4;
     List<Marker> markers = new ArrayList();
+    List<Polyline> lines = new ArrayList();
 
     // location with location manager and listener
     LocationManager locationManager;
@@ -102,6 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick( Polyline polyline) {
+                
                Toast.makeText(getApplicationContext(),"address2",Toast.LENGTH_LONG).show();
 
             }
@@ -109,10 +112,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnPolygonClickListener(new GoogleMap.OnPolygonClickListener() {
             @Override
             public void onPolygonClick(Polygon polygon) {
+                //getting distance b/w all points
                 double dist_AB = calculateDistance(markers.get(0).getPosition(),markers.get(1).getPosition());
                 double dist_BC = calculateDistance(markers.get(1).getPosition(),markers.get(2).getPosition());
                 double dist_CD = calculateDistance(markers.get(2).getPosition(),markers.get(3).getPosition());
                 double dist_DA = calculateDistance(markers.get(3).getPosition(),markers.get(0).getPosition());
+                //adding all distances to calculate Total distance
                 double totalDistance = dist_AB + dist_BC + dist_CD + dist_DA ;
               Toast.makeText(getApplicationContext(),"Total Distance = " + String.format("%.2f", totalDistance*0.001)+ " KM",Toast.LENGTH_LONG).show();
 
@@ -166,14 +171,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-
-                for (Marker marker: markers)
-                {
-                    if(calculateDistance(latLng,marker.getPosition())*100 < 1)
-                    {
-                        Toast.makeText(getApplicationContext(),"qwe",Toast.LENGTH_LONG ).show();
-                    }
-                }
                 // set marker
                 setMarker(latLng);
             }
@@ -236,19 +233,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void drawShape() {
+
         if (markers.size() == POLYGON_SIDES) {
             PolygonOptions options = new PolygonOptions()
                     .fillColor(0x3500FF00)
                     .strokeColor(Color.RED)
-                    .strokeWidth(7).clickable(true);
+                    .strokeWidth(1).clickable(true);
 
             for (int i = 0; i < POLYGON_SIDES; i++) {
                 options.add(markers.get(i).getPosition());
+                if(i<POLYGON_SIDES - 1) {
+                    drawLines(markers.get(i), markers.get(i + 1));
+                }
+                else
+                {
+                    drawLines(markers.get(i), markers.get(0));
+                }
             }
 
             shape = mMap.addPolygon(options);
 
         }
+
+    }
+    private void drawLines(Marker startMarker , Marker endMarker)
+    {
+        PolylineOptions options = new PolylineOptions()
+                .color(Color.RED)
+                .width(12).clickable(true);
+        options.add(startMarker.getPosition(), endMarker.getPosition());
+        lines.add(mMap.addPolyline(options));
 
     }
 
