@@ -104,8 +104,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick( Polyline polyline) {
-                
-               Toast.makeText(getApplicationContext(),"address2",Toast.LENGTH_LONG).show();
+
+                //Calculating distance between line points
+                Double lineDistnc = calculateDistance(polyline.getPoints().get(0),polyline.getPoints().get(1));
+                Toast.makeText(getApplicationContext(),"Line Distance = " + String.format("%.2f", lineDistnc*0.001)+ " KM",Toast.LENGTH_LONG).show();
 
             }
         });
@@ -278,6 +280,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if(shape != null)
         shape.remove();
         shape = null;
+        if (lines.size() != 0)
+        {
+            for (Polyline pline: lines) {
+                pline.remove();
+            }
+
+        }
     }
 
     private void startUpdateLocation() {
